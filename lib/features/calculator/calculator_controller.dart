@@ -1,13 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'calculator_state.dart';
+import '../logs/log_model.dart';
+import '../../services/database_service.dart';
 
 class CalculatorController extends Notifier<CalculatorState> {
+  // We'll store a reference to the DB service
+  late final DatabaseService _dbService;
+
   @override
   CalculatorState build() {
-    return const CalculatorState(); // Initial state
+    // Grab the database service from the Riverpod provider
+    _dbService = ref.read(databaseProvider);
+    return const CalculatorState();
   }
 
   void onButtonPressed(String value) {
+    // 1. Log the event to SQLite silently in the background
+    _logAction(value);
+
+    // ... (Keep the rest of your exact same button logic here)
     if (value == 'C') {
       state = const CalculatorState();
       return;
@@ -31,11 +42,9 @@ class CalculatorController extends Notifier<CalculatorState> {
     }
 
     if (value == '=') {
-      // SECRET BACKDOOR TRIGGER
       if (state.display == '2580') {
         print("🚨 SECRET PIN ENTERED! 🚨");
-        print("TODO: Navigate to Security Dashboard");
-        state = const CalculatorState(); // Reset silently
+        state = const CalculatorState();
         return;
       }
 
@@ -45,7 +54,6 @@ class CalculatorController extends Notifier<CalculatorState> {
       return;
     }
 
-    // Handle numbers and decimals
     if (state.shouldResetDisplay) {
       state = state.copyWith(
         display: value,
@@ -61,7 +69,21 @@ class CalculatorController extends Notifier<CalculatorState> {
     }
   }
 
+  // New method to handle the database insertion
+  Future<void> _logAction(String buttonPressed) async {
+    final log = LogEvent(
+      eventType: 'calculator_input',
+      description: buttonPressed,
+      timestamp: DateTime.now(),
+      source: 'Flutter',
+    );
+    
+    // This runs asynchronously so it doesn't slow down the UI
+    await _dbService.insertLog(log); 
+  }
+
   void _calculateResult() {
+    // ... (keep your existing _calculateResult logic here)
     double num1 = double.parse(state.firstOperand);
     double num2 = double.parse(state.display);
     double result = 0;
@@ -85,7 +107,6 @@ class CalculatorController extends Notifier<CalculatorState> {
   }
 }
 
-// This is the provider the UI will use to watch the state
 final calculatorProvider = NotifierProvider<CalculatorController, CalculatorState>(() {
   return CalculatorController();
 });
