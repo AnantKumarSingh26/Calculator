@@ -1,14 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'calculator_controller.dart';
+import '../security/security_dashboard_screen.dart'; // Add this import
 
 class CalculatorScreen extends ConsumerWidget {
   const CalculatorScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // LISTEN FOR THE SECRET TRIGGER
+    ref.listen(calculatorProvider, (previous, next) {
+      if (next.unlockDashboard) {
+        ref.read(calculatorProvider.notifier).resetNavigationFlag();
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SecurityDashboardScreen(),
+          ),
+        );
+      }
+    });
+
     final calcState = ref.watch(calculatorProvider);
-    
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -18,7 +33,10 @@ class CalculatorScreen extends ConsumerWidget {
               flex: 2,
               child: Container(
                 alignment: Alignment.bottomRight,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 24,
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -51,7 +69,7 @@ class CalculatorScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            
+
             // Keypad Area (Remains unchanged)
             Expanded(
               flex: 5,
@@ -67,7 +85,11 @@ class CalculatorScreen extends ConsumerWidget {
                       child: Row(
                         children: [
                           _buildButton(ref, 'C', textColor: Colors.redAccent),
-                          _buildButton(ref, '⌫', textColor: Colors.orangeAccent),
+                          _buildButton(
+                            ref,
+                            '⌫',
+                            textColor: Colors.orangeAccent,
+                          ),
                           _buildButton(ref, '%', textColor: Colors.tealAccent),
                           _buildButton(ref, '÷', textColor: Colors.tealAccent),
                         ],
@@ -108,7 +130,12 @@ class CalculatorScreen extends ConsumerWidget {
                         children: [
                           _buildButton(ref, '0'),
                           _buildButton(ref, '.'),
-                          _buildButton(ref, '=', color: Colors.tealAccent, textColor: Colors.black),
+                          _buildButton(
+                            ref,
+                            '=',
+                            color: Colors.tealAccent,
+                            textColor: Colors.black,
+                          ),
                         ],
                       ),
                     ),
@@ -122,7 +149,12 @@ class CalculatorScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildButton(WidgetRef ref, String text, {Color? color, Color? textColor}) {
+  Widget _buildButton(
+    WidgetRef ref,
+    String text, {
+    Color? color,
+    Color? textColor,
+  }) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -140,7 +172,7 @@ class CalculatorScreen extends ConsumerWidget {
                   color: Colors.black.withOpacity(0.3),
                   blurRadius: 4,
                   offset: const Offset(2, 2),
-                )
+                ),
               ],
             ),
             child: Center(

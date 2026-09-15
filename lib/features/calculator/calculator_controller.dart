@@ -25,8 +25,8 @@ class CalculatorController extends Notifier<CalculatorState> {
     }
 
     if (value == '⌫') {
-      final newDisplay = state.display.length > 1 
-          ? state.display.substring(0, state.display.length - 1) 
+      final newDisplay = state.display.length > 1
+          ? state.display.substring(0, state.display.length - 1)
           : '0';
       state = state.copyWith(display: newDisplay);
       return;
@@ -41,10 +41,11 @@ class CalculatorController extends Notifier<CalculatorState> {
       return;
     }
 
+    // Replace your secret backdoor trigger inside onButtonPressed with this:
     if (value == '=') {
       if (state.display == '2580') {
-        print("🚨 SECRET PIN ENTERED! 🚨");
-        state = const CalculatorState();
+        // Trigger the UI to navigate, and wipe the display
+        state = const CalculatorState(unlockDashboard: true);
         return;
       }
 
@@ -55,10 +56,7 @@ class CalculatorController extends Notifier<CalculatorState> {
     }
 
     if (state.shouldResetDisplay) {
-      state = state.copyWith(
-        display: value,
-        shouldResetDisplay: false,
-      );
+      state = state.copyWith(display: value, shouldResetDisplay: false);
     } else {
       if (state.display == '0' && value != '.') {
         state = state.copyWith(display: value);
@@ -77,9 +75,9 @@ class CalculatorController extends Notifier<CalculatorState> {
       timestamp: DateTime.now(),
       source: 'Flutter',
     );
-    
+
     // This runs asynchronously so it doesn't slow down the UI
-    await _dbService.insertLog(log); 
+    await _dbService.insertLog(log);
   }
 
   void _calculateResult() {
@@ -89,24 +87,38 @@ class CalculatorController extends Notifier<CalculatorState> {
     double result = 0;
 
     switch (state.operatorSymbol) {
-      case '+': result = num1 + num2; break;
-      case '-': result = num1 - num2; break;
-      case '×': result = num1 * num2; break;
-      case '÷': result = num2 == 0 ? 0 : num1 / num2; break;
+      case '+':
+        result = num1 + num2;
+        break;
+      case '-':
+        result = num1 - num2;
+        break;
+      case '×':
+        result = num1 * num2;
+        break;
+      case '÷':
+        result = num2 == 0 ? 0 : num1 / num2;
+        break;
     }
 
-    String finalDisplay = result.toString().endsWith('.0') 
-        ? result.toString().substring(0, result.toString().length - 2) 
+    String finalDisplay = result.toString().endsWith('.0')
+        ? result.toString().substring(0, result.toString().length - 2)
         : result.toString();
-        
+
     state = state.copyWith(
       display: finalDisplay,
       firstOperand: '',
       operatorSymbol: '',
     );
   }
+
+  // Call this after navigation happens so it doesn't get stuck in a loop
+  void resetNavigationFlag() {
+    state = state.copyWith(unlockDashboard: false);
+  }
 }
 
-final calculatorProvider = NotifierProvider<CalculatorController, CalculatorState>(() {
-  return CalculatorController();
-});
+final calculatorProvider =
+    NotifierProvider<CalculatorController, CalculatorState>(() {
+      return CalculatorController();
+    });
